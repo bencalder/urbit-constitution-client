@@ -4,7 +4,6 @@ parentObj.request = null;
 parentObj.globalFuncs = null;
 
 parentObj.rawPost = function(data, callback) {
-
   const options = {
     json: true,
     uri: 'http://localhost:8545',
@@ -14,11 +13,8 @@ parentObj.rawPost = function(data, callback) {
       'Content-Type': 'application/json; charset=UTF-8'
     }
   };
-
   var rawData = '';
-
   request.post(options, function(error, response, body) {
-
     if (!error && response.statusCode == 200) {
       callback(body);
     } else return console.error('Call failed:', body[0].error)

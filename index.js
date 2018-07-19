@@ -15,7 +15,7 @@ var validator = require('./scripts/validator');
 
 var wallet = require('./test/testWallet');
 var ajaxReq = require('./test/testAjaxReq');
-// var parentObj = require('./test/testParentObj');
+var parentObj = require('./test/testParentObj');
 
 ethUtil.crypto = require('crypto');
 ethUtil.solidityCoder = require('./scripts/solidity/coder');
@@ -45,8 +45,9 @@ ajaxReq.globalFuncs = globalFuncs;
 ajaxReq.parentObj = require('./test/testParentObj');
 ajaxReq.BigNumber = BigNumber;
 ajaxReq.request = request;
-ajaxReq.parentObj.request = request;
-ajaxReq.parentObj.globalFuncs = globalFuncs;
+
+parentObj.request = request;
+parentObj.globalFuncs = globalFuncs;
 
 var contract = {
   address: '',
@@ -125,7 +126,6 @@ var doTransaction = function(address, func, input, callback, value) {
             }
           });
         } catch (e) {
-          console.log('ERROR: ' + e);
           callback({ error: { msg: e }, data: '' });
         }
       }
@@ -231,7 +231,7 @@ var readContractData = function(address, func, input, outTypes, callback) {
       for (var i in decoded) {
         if (decoded[i] instanceof BigNumber) decoded[i] = decoded[i].toFixed(0);
       }
-      console.log('Decoded response: ' + JSON.stringify(decoded));
+      // console.log('Decoded response: ' + JSON.stringify(decoded));
       callback(decoded);
     } else throw data.msg;
   });
@@ -445,7 +445,7 @@ var getCanEscapeTo = function(ship, sponsor, callback) {
   );
 }
 
-function getShipsOwner(callback) {
+var getShipsOwner = function(callback) {
   readContractData(contracts.ships,
     "owner()",
     [],

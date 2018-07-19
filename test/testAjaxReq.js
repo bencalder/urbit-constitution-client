@@ -46,9 +46,9 @@ ajaxReq.getTransaction = function (txHash, callback) {
 ajaxReq.getTransactionData = function (addr, callback) {
     var response = { error: false, msg: '', data: { address: addr, balance: '', gasprice: '', nonce: '' } };
     var reqObj = [
-        { "id": this.getRandomID(), "jsonrpc": "2.0", "method": "eth_getBalance", "params": [addr, 'pending'] }, 
-        { "id": this.getRandomID(), "jsonrpc": "2.0", "method": "eth_gasPrice", "params": [] }, 
-        { "id": this.getRandomID(), "jsonrpc": "2.0", "method": "eth_getTransactionCount", "params": [addr, 'pending'] }
+        { "id": this.parentObj.getRandomID(), "jsonrpc": "2.0", "method": "eth_getBalance", "params": [addr, 'pending'] }, 
+        { "id": this.parentObj.getRandomID(), "jsonrpc": "2.0", "method": "eth_gasPrice", "params": [] }, 
+        { "id": this.parentObj.getRandomID(), "jsonrpc": "2.0", "method": "eth_getTransactionCount", "params": [addr, 'pending'] }
     ];
     this.post(reqObj, function (data) {
         for (var i in data) {
@@ -75,7 +75,7 @@ ajaxReq.sendRawTx = function (rawTx, callback) {
 }
 
 ajaxReq.getEstimatedGas = function (txobj, callback) {
-    txobj.value = trimHexZero(txobj.value);
+    txobj.value = this.trimHexZero(txobj.value);
     this.post({
         method: 'eth_estimateGas',
         params: [{ from: txobj.from, to: txobj.to, value: txobj.value, data: txobj.data }]
@@ -101,7 +101,8 @@ ajaxReq.trimHexZero = function (hex) {
 ajaxReq.getEthCall = function (txobj, callback) {
     if (!this.ethCallArr.calls.length) {
         this.ethCallArr.timer = setTimeout(function () {
-            this.rawPost(this.ethCallArr.calls, function (data) {
+          // console.log('parentobj: ' + this.ethCallArr.calls);
+            this.parentObj.rawPost(this.ethCallArr.calls, function (data) {
                 this.ethCallArr.calls = [];
                 var _callbacks = this.ethCallArr.callbacks.slice();
                 this.ethCallArr.callbacks = [];
@@ -112,7 +113,8 @@ ajaxReq.getEthCall = function (txobj, callback) {
             });
         }, 500);
     }
-    this.ethCallArr.calls.push({ "id": this.getRandomID(), "jsonrpc": "2.0", "method": "eth_call", "params": [{ to: txobj.to, data: txobj.data }, 'pending'] });
+    this.ethCallArr.calls.push({ "id": this.parentObj.getRandomID(), "jsonrpc": "2.0", "method": "eth_call", "params": [{ to: txobj.to, data: txobj.data }, 'pending'] });
+    // console.log('parentobj: ' + JSON.stringify(this.ethCallArr.calls));
     this.ethCallArr.callbacks.push(callback);
 }
 
@@ -133,7 +135,7 @@ ajaxReq.getRandomID = function () {
 ajaxReq.post = function(data, callback) {
   data.id = this.getRandomID();
   data.jsonrpc = "2.0";
-  const options = {
+  var options = {
     json: true,
     uri: 'http://localhost:8545',
     body: data,
@@ -144,6 +146,7 @@ ajaxReq.post = function(data, callback) {
   }
   var rawData = '';
   request.post(options, function(error, response, body) {
+
     if (!error && response.statusCode == 200) {
       callback(body);
     } else return console.error('Call failed:', body[0].error)
@@ -158,31 +161,32 @@ ajaxReq.post = function(data, callback) {
   });
 }
 
-ajaxReq.rawPost = function(data, callback) {
-  const options = {
-    json: true,
-    uri: 'http://localhost:8545',
-    body: data,
-    headers: {
-      'Accept': 'application/json, text/plain, */*',
-      'Content-Type': 'application/json; charset=UTF-8'
-    }
-  };
-  var rawData = '';
-  request.post(options, function(error, response, body) {
-    if (!error && response.statusCode == 200) {
-      callback(body);
-    } else return console.error('Call failed:', body[0].error)
-  }).on('data', (chunk) => { 
-    rawData += chunk;
-  }).on('end', () => {
-    try {
-      const parsedData = JSON.parse(rawData);
-    } catch (e) {
-      console.error(e.message);
-    }
-  });
-}
+// ajaxReq.rawPost = function(data, callback) {
+//   const options = {
+//     json: true,
+//     uri: 'http://localhost:8545',
+//     body: data,
+//     headers: {
+//       'Accept': 'application/json, text/plain, */*',
+//       'Content-Type': 'application/json; charset=UTF-8'
+//     }
+//   };
+//   var rawData = '';
+//   request.post(options, function(error, response, body) {
+
+//     if (!error && response.statusCode == 200) {
+//       callback(body);
+//     } else return console.error('Call failed:', body[0].error)
+//   }).on('data', (chunk) => { 
+//     rawData += chunk;
+//   }).on('end', () => {
+//     try {
+//       const parsedData = JSON.parse(rawData);
+//     } catch (e) {
+//       console.error(e.message);
+//     }
+//   });
+// }
 
 ajaxReq.blockExplorerTX = "https://etherscan.io/tx/[[txHash]]";
 ajaxReq.blockExplorerAddr = "https://etherscan.io/address/[[address]]";
