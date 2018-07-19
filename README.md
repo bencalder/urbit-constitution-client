@@ -173,10 +173,9 @@ Note that because this function doesn't take a callback this command uses the `-
 This function is a random number generator, so returned values will vary
 
 
+
 #### Call `doSpawn` with the returned spawn candidate address
-```
-node -e 'require("./index").doSpawn(791085312,console.log)'
-```
+`node -e 'require("./index").doSpawn(791085312,console.log)'`
 #### Returns
 ```
 { 
@@ -206,10 +205,10 @@ node -e 'require("./index").sendTx("0xf8aa148504e3b29200830446c694098b6cb45da68c
 { 
   error: false,
   data: 
-   { 
-   	resp: '0x5b32667f0ce0032007dba91c1011942a3140f826c69a6c689632caa91321c7b0',
-     tx: 
-      	{ 
+    { 
+   	  resp: '0x5b32667f0ce0032007dba91c1011942a3140f826c69a6c689632caa91321c7b0',
+       tx: 
+        { 
       	  gasLimit: '',
           data: '',
           to: '',
@@ -222,6 +221,7 @@ node -e 'require("./index").sendTx("0xf8aa148504e3b29200830446c694098b6cb45da68c
 }
 ```
 
+
 #### Call `doCreateGalaxy` to create a galaxy
 `node -e 'require("./index").doCreateGalaxy(42,console.log)'`
 #### Returns
@@ -230,13 +230,13 @@ node -e 'require("./index").sendTx("0xf8aa148504e3b29200830446c694098b6cb45da68c
   error: false,
   rawTx: 
   	'{	
-  		"nonce":"0x15",
-  		"gasPrice":"0x04e3b29200",
-  		"gasLimit":"0x0577b6",
-  		"to":"0x098b6cb45da68c31c751d9df211cbe3056c356d1",
-  		"value":"0x00",
-  		"data":"0x26295b52000000000000000000000000000000000000000000000000000000000000002a0000000000000000000000006deffb0cafdb11d175f123f6891aa64f01c24f7d",
-  		"chainId":1
+  	  "nonce":"0x15",
+  	  "gasPrice":"0x04e3b29200",
+  	  "gasLimit":"0x0577b6",
+  	  "to":"0x098b6cb45da68c31c751d9df211cbe3056c356d1",
+  	  "value":"0x00",
+  	  "data":"0x26295b52000000000000000000000000000000000000000000000000000000000000002a0000000000000000000000006deffb0cafdb11d175f123f6891aa64f01c24f7d",
+  	  "chainId":1
   	}',
   signedTx: '0xf8aa158504e3b29200830577b694098b6cb45da68c31c751d9df211cbe3056c356d180b84426295b52000000000000000000000000000000000000000000000000000000000000002a0000000000000000000000006deffb0cafdb11d175f123f6891aa64f01c24f7d25a02715424816be87e8ee0681e1b466351cf86e3210b741fc7df0e62569bb0f1d50a01a7cd8598b75b45517bb8cedad308d90c83b92088cd7cdde35354d5462852cda',
   showRaw: true
@@ -253,10 +253,10 @@ node -e 'require("./index").sendTx("0xf8aa158504e3b29200830577b694098b6cb45da68c
 { 
   error: false,
   data: 
-   { 
-   	 resp: '0xad46510dd77f86fa0a1290978c957d6541df9ba12253d0875554bcd2458950b7',
-     tx: 
-      	{ 
+    { 
+   	  resp: '0xad46510dd77f86fa0a1290978c957d6541df9ba12253d0875554bcd2458950b7',
+      tx: 
+        { 
       	  gasLimit: '',
           data: '',
           to: '',
@@ -267,6 +267,6 @@ node -e 'require("./index").sendTx("0xf8aa158504e3b29200830577b694098b6cb45da68c
         } 
     } 
 }
-
+```
 
 Find out more: https://urbit.org  
