@@ -1,21 +1,21 @@
 'use strict';
 var validator = function() {}
 
-var ethFuncs = require('./ethFuncs');
-var ethUtil = require('ethereumjs-util');
-var globalFuncs = require('./globalFuncs');
+validator.ethFuncs = null; // = require('./ethFuncs');
+validator.ethUtil = null; // = require('ethereumjs-util');
+validator.globalFuncs = null; // = require('./globalFuncs');
 
 validator.isValidAddress = function(address) {
     if (address && address == "0x0000000000000000000000000000000000000000") return false;
     if (address)
-        return ethFuncs.validateEtherAddress(address);
+        return this.ethFuncs.validateEtherAddress(address);
     return false;
 }
 validator.isChecksumAddress = function(address) {
-    return ethFuncs.isChecksumAddress(address);
+    return this.ethFuncs.isChecksumAddress(address);
 }
 validator.isValidENSorEtherAddress = function(address) {
-    return (validator.isValidAddress(address) || validator.isValidENSAddress(address));
+    return (this.isValidAddress(address) || this.isValidENSAddress(address));
 }
 validator.isValidENSName = function(str) {
     try {
@@ -40,13 +40,13 @@ validator.isValidENSAddress = function(address) {
     return false;
 }
 validator.isValidBTCAddress = function(address) {
-    return ethUtil.WAValidator.validate(address, 'BTC');
+    return this.ethUtil.WAValidator.validate(address, 'BTC');
 }
 validator.isPositiveNumber = function(value) {
-    return globalFuncs.isNumeric(value) && parseFloat(value) >= 0;
+    return this.globalFuncs.isNumeric(value) && parseFloat(value) >= 0;
 }
 validator.isValidHex = function(hex) {
-    return ethFuncs.validateHexString(hex);
+    return this.ethFuncs.validateHexString(hex);
 }
 validator.isValidPrivKey = function(privkeyLen) {
     return privkeyLen == 64 || privkeyLen == 66 || privkeyLen == 128 || privkeyLen == 132;
@@ -59,14 +59,14 @@ validator.isPasswordLenValid = function(pass, len) {
     return pass.length > len;
 }
 validator.isAlphaNumeric = function(value) {
-    return globalFuncs.isAlphaNumeric(value);
+    return this.globalFuncs.isAlphaNumeric(value);
 }
 validator.isAlphaNumericSpace = function(value) {
     if (!value) return false;
-    return globalFuncs.isAlphaNumeric(value.replace(/ /g, ''));
+    return this.globalFuncs.isAlphaNumeric(value.replace(/ /g, ''));
 }
 validator.isJSON = function(json) {
-    return ethUtil.solidityUtils.isJson(json);
+    return this.ethUtil.solidityUtils.isJson(json);
 }
 validator.isValidURL = function(str) {
     var pattern = new RegExp('^(https?:\\/\\/)' + // protocol

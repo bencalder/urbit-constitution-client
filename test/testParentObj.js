@@ -1,85 +1,98 @@
 'use strict';
+var parentObj = function() {}
+parentObj.request = null;
+parentObj.globalFuncs = null;
 
-var http = require('http');
-http.post = require('http-post');
+parentObj.rawPost = function(data, callback) {
 
-var globalFuncs = require('../scripts/globalFuncs');
-
-const options = {
-  hostname: 'localhost',
-  port: 8545,
-  path: '/',
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json; charset=UTF-8'
-  }
-};
-
-var getEthCall = function (txobj, callback) {
-    // var parentObj = this;
-    if (!ethCallArr.calls.length) {
-        ethCallArr.timer = setTimeout(function () {
-            parentObj.rawPost(ethCallArr.calls, function (data) {
-                ethCallArr.calls = [];
-                var _callbacks = ethCallArr.callbacks.slice();
-                ethCallArr.callbacks = [];
-                for (var i in data) {
-                    if (data[i].error) _callbacks[i]({ error: true, msg: data[i].error.message, data: '' });
-                    else _callbacks[i]({ error: false, msg: '', data: data[i].result });
-                }
-            });
-        }, 500);
+  const options = {
+    json: true,
+    uri: 'http://localhost:8545',
+    body: data,
+    headers: {
+      'Accept': 'application/json, text/plain, */*',
+      'Content-Type': 'application/json; charset=UTF-8'
     }
-    ethCallArr.calls.push({ "id": parentObj.getRandomID(), "jsonrpc": "2.0", "method": "eth_call", "params": [{ to: txobj.to, data: txobj.data }, 'pending'] });
-    ethCallArr.callbacks.push(callback);
+  };
+
+  var rawData = '';
+
+  request.post(options, function(error, response, body) {
+
+    if (!error && response.statusCode == 200) {
+      callback(body);
+    } else return console.error('Call failed:', body[0].error)
+  }).on('data', (chunk) => { 
+    rawData += chunk;
+  }).on('end', () => {
+    try {
+      const parsedData = JSON.parse(rawData);
+    } catch (e) {
+      console.error(e.message);
+    }
+  });
 }
 
-var rawPost = function (data, callback) {
-    console.log("RAWPOST");
-    http.post(options, JSON.stringify(data), function(res) {
-      const { statusCode } = res;
-      const contentType = res.headers['content-type'];
-
-      let error;
-      if (statusCode !== 200) {
-        error = new Error('Request Failed.\n' +
-                      `Status Code: ${statusCode}`);
-      } else if (!/^application\/json/.test(contentType)) {
-        error = new Error('Invalid content-type.\n' +
-                      `Expected application/json but received ${contentType}`);
-      }
-      if (error) {
-        console.error(error.message);
-        // consume response data to free up memory
-        res.resume();
-        return;
-      }
-
-      res.setEncoding('utf8');
-      let rawData = '';
-      res.on('data', (chunk) => { rawData += chunk; });
-      res.on('end', () => {
-        try {
-          const parsedData = JSON.parse(rawData);
-          console.log(parsedData);
-        } catch (e) {
-          console.error(e.message);
-        }
-      });
-    }).on('error', (e) => {
-      console.error('Got error: ' + e.message);
-    });
+parentObj.getRandomID = function() {
+    return this.globalFuncs.getRandomBytes(16).toString('hex');
 }
 
-var getRandomID = function () {
-    return globalFuncs.getRandomBytes(16).toString('hex');
-}
+parentObj.type = "ETH";
 
-var type = "ETH";
+module.exports = parentObj;
 
-module.exports = {
-  getEthCall: getEthCall,
-  type: type,
-  getRandomID: getRandomID,
-  rawPost: rawPost
-}
+
+
+// 'use strict';
+
+// var request = require('request');
+// var globalFuncs = require('../scripts/globalFuncs');
+
+// function rawPost(data, callback) {
+
+//   const options = {
+//     json: true,
+//     uri: 'http://localhost:8545',
+//     body: data,
+//     headers: {
+//       'Accept': 'application/json, text/plain, */*',
+//       'Content-Type': 'application/json; charset=UTF-8'
+//     }
+//   };
+
+//   var rawData = '';
+
+//   request.post(options, function(error, response, body) {
+
+//     if (!error && response.statusCode == 200) {
+//       // console.log('ERROR: ' + error);
+//       // console.log('RESPONSE: ' + JSON.stringify(response));
+//       // console.log('BODY: ' + JSON.stringify(body));
+//       // delete data[0]['method'];
+//       // delete data[0]['params'];
+//       // delete data[0]['pending'];
+//       // data[0]['result'] = body[0]['result'];
+//       callback(body);
+//     } else return console.error('Call failed:', body[0].error)
+//   }).on('data', (chunk) => { 
+//     rawData += chunk;
+//   }).on('end', () => {
+//     try {
+//       const parsedData = JSON.parse(rawData);
+//     } catch (e) {
+//       console.error(e.message);
+//     }
+//   });
+// }
+
+// function getRandomID() {
+//     return globalFuncs.getRandomBytes(16).toString('hex');
+// }
+
+// var type = "ETH";
+
+// module.exports = {
+//   type: type,
+//   getRandomID: getRandomID,
+//   rawPost: rawPost
+// }

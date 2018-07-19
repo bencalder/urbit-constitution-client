@@ -1,4 +1,6 @@
 'use strict';
+var BigNumber = require('bignumber.js');
+
 var customNode = function(srvrUrl, port, httpBasicAuthentication) {
     this.SERVERURL = port ? srvrUrl + ':' + port : srvrUrl;
     if (httpBasicAuthentication) {

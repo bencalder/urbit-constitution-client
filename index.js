@@ -1,33 +1,66 @@
+'use strict';
+
 // urbit constitution client module
 
-var globalFuncs = require('./scripts/globalFuncs');
-
-var wallet; // = require('./test/testWallet');
-var ajaxReq; // = require('./test/testAjaxReq');
-var poolAddress;
-
+var BigNumber = require('bignumber.js');
+var ethUtil2 = require('ethereumjs-tx');
+var obService = require('urbit-ob');
 var ethUtil = require('ethereumjs-util');
+var request = require('request');
+
+var globalFuncs = require('./scripts/globalFuncs');
+var uiFuncs = require('./scripts/uiFuncs');
+var ethFuncs = require('./scripts/ethFuncs');
+var validator = require('./scripts/validator');
+
+var wallet = require('./test/testWallet');
+var ajaxReq = require('./test/testAjaxReq');
+// var parentObj = require('./test/testParentObj');
+
 ethUtil.crypto = require('crypto');
 ethUtil.solidityCoder = require('./scripts/solidity/coder');
 ethUtil.solidityUtils = require('./scripts/solidity/utils');
-var uiFuncs = require('./scripts/uiFuncs');
-var ethFuncs = require('./scripts/ethFuncs');
-var obService = require('urbit-ob');
-var validator = require('./scripts/validator');
+
+globalFuncs.ethUtil = ethUtil;
+
+uiFuncs.BigNumber = BigNumber;
+uiFuncs.wallet = wallet;
+uiFuncs.ajaxReq = ajaxReq;
+uiFuncs.ethFuncs = ethFuncs;
+uiFuncs.etherUnits = ethUtil.solidityUtils;
+uiFuncs.ethUtil2 = ethUtil2;
+
+ethFuncs.ethUtil = ethUtil;
+ethFuncs.BigNumber = BigNumber;
+ethFuncs.ajaxReq = ajaxReq;
+ethFuncs.etherUnits = ethUtil.solidityUtils;
+
+validator.ethFuncs = ethFuncs;
+validator.ethUtil = ethUtil;
+validator.globalFuncs = globalFuncs;
+
+wallet.ethUtil = ethUtil;
+
+ajaxReq.globalFuncs = globalFuncs;
+ajaxReq.parentObj = require('./test/testParentObj');
+ajaxReq.BigNumber = BigNumber;
+ajaxReq.request = request;
+ajaxReq.parentObj.request = request;
+ajaxReq.parentObj.globalFuncs = globalFuncs;
 
 var contract = {
   address: '',
   abi: '',
   functions: [],
   selectedFunc: null
-};
+}
 
 var contracts = {
   ships: "0xe0834579269eac6beca2882a6a21f6fb0b1d7196",
   polls: "0x0654b24a5da81f6ed1ac568e802a9d6b21483561",
   pool: "0x0724ee9912836c2563eee031a739dda6dd775333",
   constitution: "0x098b6cb45da68c31c751d9df211cbe3056c356d1"
-};
+}
 
 var oneSpark = 1000000000000000000;
 
@@ -39,15 +72,17 @@ var tx = {
   value: 0,
   nonce: null,
   gasPrice: null
-};
+}
 
 var nonceDec;
 var gasPriceDec;
 var offline = false;
+var rawTx;
+var poolAddress;
 
 var doTransaction = function(address, func, input, callback, value) {
   if (wallet.getAddressString() == null) {
-  return;
+    return;
   }
   var data = buildTransactionData(func, input);
   tx.data = data;
@@ -90,6 +125,7 @@ var doTransaction = function(address, func, input, callback, value) {
             }
           });
         } catch (e) {
+          console.log('ERROR: ' + e);
           callback({ error: { msg: e }, data: '' });
         }
       }
@@ -195,6 +231,7 @@ var readContractData = function(address, func, input, outTypes, callback) {
       for (var i in decoded) {
         if (decoded[i] instanceof BigNumber) decoded[i] = decoded[i].toFixed(0);
       }
+      console.log('Decoded response: ' + JSON.stringify(decoded));
       callback(decoded);
     } else throw data.msg;
   });
@@ -408,7 +445,7 @@ var getCanEscapeTo = function(ship, sponsor, callback) {
   );
 }
 
-var getShipsOwner = function(callback) {
+function getShipsOwner(callback) {
   readContractData(contracts.ships,
     "owner()",
     [],
@@ -745,7 +782,7 @@ var checkIsNotOwned = function(ship, callback, next) {
 // DO: do transactions that modify the blockchain
 //
 var doCreateGalaxy = function(galaxy, callback) {
-  addr = wallet.getAddressString();
+  var addr = wallet.getAddressString();
   validateGalaxy(galaxy, callback, function() {
     validateAddress(addr, callback, function() {
       if (offline) return transact();
@@ -807,7 +844,7 @@ var doWithdraw = function(star, poolAddress, callback) {
 var doSpawn = function(ship, callback) {
   var sponsor = ship % 256;
   if (ship > 65535) sponsor = ship % 65536;
-  addr = wallet.getAddressString();
+  var addr = wallet.getAddressString();
   validateShip(ship, callback, function() {
     validateAddress(addr, callback, function() {
       if (offline) return transact();

@@ -1,6 +1,10 @@
 'use strict';
+
 var ethFuncs = function() {}
-var ethUtil = require('ethereumjs-util');
+ethFuncs.ethUtil = null; // = require('ethereumjs-util');
+ethFuncs.BigNumber = null; // = require('bignumber.js');
+ethFuncs.ajaxReq = null; // = require('../test/testAjaxReq');
+ethFuncs.etherUnits = null;
 ethFuncs.gasAdjustment = 21;
 ethFuncs.validateEtherAddress = function(address) {
     if (address.substring(0, 2) != "0x") return false;
@@ -9,44 +13,53 @@ ethFuncs.validateEtherAddress = function(address) {
     else
         return this.isChecksumAddress(address);
 }
+
 ethFuncs.isChecksumAddress = function(address) {
-    return address == ethUtil.toChecksumAddress(address);
+    return address == this.ethUtil.toChecksumAddress(address);
 }
+
 ethFuncs.validateHexString = function(str) {
     if (str == "") return true;
     str = str.substring(0, 2) == '0x' ? str.substring(2).toUpperCase() : str.toUpperCase();
     var re = /^[0-9A-F]+$/g;
     return re.test(str);
 }
+
 ethFuncs.sanitizeHex = function(hex) {
     hex = hex.substring(0, 2) == '0x' ? hex.substring(2) : hex;
     if (hex == "") return "";
     return '0x' + this.padLeftEven(hex);
 }
+
 ethFuncs.trimHexZero = function(hex) {
     if (hex == "0x00" || hex == "0x0") return "0x0";
     hex = this.sanitizeHex(hex);
     hex = hex.substring(2).replace(/^0+/, '');
     return '0x' + hex;
 }
+
 ethFuncs.padLeftEven = function(hex) {
     hex = hex.length % 2 != 0 ? '0' + hex : hex;
     return hex;
 }
+
 ethFuncs.addTinyMoreToGas = function(hex) {
     hex = this.sanitizeHex(hex);
     //if (parseInt(ethFuncs.gasAdjustment) >= 80) {
         //uiFuncs.notifier.danger("We are currently trying to debug a weird issue. Please contact support@myetherwallet.com w/ subject line WEIRD ISSUE to help.");
         //throw "error";
     //}
-    return new BigNumber(ethFuncs.gasAdjustment * etherUnits.getValueOfUnit('gwei')).toString(16);
+    return new BigNumber(this.gasAdjustment * this.etherUnits.getValueOfUnit('gwei')).toString(16);
 }
+
 ethFuncs.decimalToHex = function(dec) {
     return new BigNumber(dec).toString(16);
 }
+
 ethFuncs.hexToDecimal = function(hex) {
     return new BigNumber(this.sanitizeHex(hex)).toString();
 }
+
 ethFuncs.contractOutToArray = function(hex) {
     hex = hex.replace('0x', '').match(/.{64}/g);
     for (var i = 0; i < hex.length; i++) {
@@ -55,19 +68,23 @@ ethFuncs.contractOutToArray = function(hex) {
     }
     return hex;
 }
+
 ethFuncs.getNakedAddress = function(address) {
     return address.toLowerCase().replace('0x', '');
 }
+
 ethFuncs.getDeteministicContractAddress = function(address, nonce) {
     nonce = new BigNumber(nonce).toString();
     address = address.substring(0, 2) == '0x' ? address : '0x' + address;
-    return '0x' + ethUtil.generateAddress(address, nonce).toString('hex');
+    return '0x' + this.ethUtil.generateAddress(address, nonce).toString('hex');
 }
+
 ethFuncs.padLeft = function(n, width, z) {
     z = z || '0';
     n = n + '';
     return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
 }
+
 ethFuncs.getDataObj = function(to, func, arrVals) {
     var val = "";
     for (var i = 0; i < arrVals.length; i++) val += this.padLeft(arrVals[i], 64);
@@ -76,16 +93,19 @@ ethFuncs.getDataObj = function(to, func, arrVals) {
         data: func + val
     };
 }
+
 ethFuncs.getFunctionSignature = function(name) {
-    return ethUtil.sha3(name).toString('hex').slice(0, 8);
-};
+    // console.log('ethutil: ' + ethUtil);
+    return this.ethUtil.sha3(name).toString('hex').slice(0, 8);
+}
+
 ethFuncs.estimateGas = function(dataObj, callback) {
     var adjustGas = function(gasLimit) {
         if (gasLimit == "0x5209") return "21000";
         if (new BigNumber(gasLimit).gt(3500000)) return "-1";
         return new BigNumber(gasLimit).toString();
     }
-    ajaxReq.getEstimatedGas(dataObj, function(data) {
+    this.ajaxReq.getEstimatedGas(dataObj, function(data) {
         if (data.error) {
             callback(data);
             return;
@@ -99,3 +119,137 @@ ethFuncs.estimateGas = function(dataObj, callback) {
     });
 }
 module.exports = ethFuncs;
+
+
+// 'use strict';
+// var ethUtil; // = require('ethereumjs-util');
+// var BigNumber; // = require('bignumber.js');
+// var ajaxReq; // = require('../test/testAjaxReq');
+
+// var gasAdjustment = 21;
+
+// var validateEtherAddress = function(address) {
+//     if (address.substring(0, 2) != "0x") return false;
+//     else if (!/^(0x)?[0-9a-f]{40}$/i.test(address)) return false;
+//     else if (/^(0x)?[0-9a-f]{40}$/.test(address) || /^(0x)?[0-9A-F]{40}$/.test(address)) return true;
+//     else
+//         return isChecksumAddress(address);
+// }
+
+// var isChecksumAddress = function(address) {
+//     return address == ethUtil.toChecksumAddress(address);
+// }
+
+// var validateHexString = function(str) {
+//     if (str == "") return true;
+//     str = str.substring(0, 2) == '0x' ? str.substring(2).toUpperCase() : str.toUpperCase();
+//     var re = /^[0-9A-F]+$/g;
+//     return re.test(str);
+// }
+
+// var sanitizeHex = function(hex) {
+//     hex = hex.substring(0, 2) == '0x' ? hex.substring(2) : hex;
+//     if (hex == "") return "";
+//     return '0x' + padLeftEven(hex);
+// }
+
+// var trimHexZero = function(hex) {
+//     if (hex == "0x00" || hex == "0x0") return "0x0";
+//     hex = sanitizeHex(hex);
+//     hex = hex.substring(2).replace(/^0+/, '');
+//     return '0x' + hex;
+// }
+
+// var padLeftEven = function(hex) {
+//     hex = hex.length % 2 != 0 ? '0' + hex : hex;
+//     return hex;
+// }
+
+// var addTinyMoreToGas = function(hex) {
+//     hex = sanitizeHex(hex);
+//     //if (parseInt(ethFuncs.gasAdjustment) >= 80) {
+//         //uiFuncs.notifier.danger("We are currently trying to debug a weird issue. Please contact support@myetherwallet.com w/ subject line WEIRD ISSUE to help.");
+//         //throw "error";
+//     //}
+//     return new BigNumber(gasAdjustment * etherUnits.getValueOfUnit('gwei')).toString(16);
+// }
+
+// var decimalToHex = function(dec) {
+//     return new BigNumber(dec).toString(16);
+// }
+
+// var hexToDecimal = function(hex) {
+//     return new BigNumber(sanitizeHex(hex)).toString();
+// }
+
+// var contractOutToArray = function(hex) {
+//     hex = hex.replace('0x', '').match(/.{64}/g);
+//     for (var i = 0; i < hex.length; i++) {
+//         hex[i] = hex[i].replace(/^0+/, '');
+//         hex[i] = hex[i] == "" ? "0" : hex[i];
+//     }
+//     return hex;
+// }
+
+// var getNakedAddress = function(address) {
+//     return address.toLowerCase().replace('0x', '');
+// }
+
+// var getDeteministicContractAddress = function(address, nonce) {
+//     nonce = new BigNumber(nonce).toString();
+//     address = address.substring(0, 2) == '0x' ? address : '0x' + address;
+//     return '0x' + ethUtil.generateAddress(address, nonce).toString('hex');
+// }
+
+// var padLeft = function(n, width, z) {
+//     z = z || '0';
+//     n = n + '';
+//     return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
+// }
+
+// var getDataObj = function(to, func, arrVals) {
+//     var val = "";
+//     for (var i = 0; i < arrVals.length; i++) val += padLeft(arrVals[i], 64);
+//     return {
+//         to: to,
+//         data: func + val
+//     };
+// }
+
+// var getFunctionSignature = function(name) {
+//     console.log('ethutil: ' + ethUtil);
+//     return ethUtil.sha3(name).toString('hex').slice(0, 8);
+// }
+
+// var estimateGas = function(dataObj, callback) {
+//     var adjustGas = function(gasLimit) {
+//         if (gasLimit == "0x5209") return "21000";
+//         if (new BigNumber(gasLimit).gt(3500000)) return "-1";
+//         return new BigNumber(gasLimit).toString();
+//     }
+//     ajaxReq.getEstimatedGas(dataObj, function(data) {
+//         if (data.error) {
+//             callback(data);
+//             return;
+//         } else {
+//             callback({
+//                 "error": false,
+//                 "msg": "",
+//                 "data": adjustGas(data.data)
+//             });
+//         }
+//     });
+// }
+
+// module.exports = {
+//     estimateGas: estimateGas,
+//     validateEtherAddress: validateEtherAddress,
+//     getFunctionSignature: getFunctionSignature,
+//     decimalToHex: decimalToHex,
+//     sanitizeHex: sanitizeHex,
+//     validateHexString: validateHexString,
+//     addTinyMoreToGas: addTinyMoreToGas,
+//     ethUtil: ethUtil,
+//     BigNumber: BigNumber,
+//     ajaxReq: ajaxReq
+// }

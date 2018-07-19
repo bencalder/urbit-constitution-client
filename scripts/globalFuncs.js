@@ -1,7 +1,8 @@
 'use strict';
-var ethUtil = require('ethereumjs-util');
+// var ethUtil = require('ethereumjs-util');
 
 var globalFuncs = function() {}
+globalFuncs.ethUtil = null;
 globalFuncs.lightMode = false;
 globalFuncs.getBlockie = function(address) {
     return blockies.create({
@@ -186,7 +187,7 @@ globalFuncs.isAlphaNumeric = function(value) {
     return !/[^a-zA-Z0-9]/.test(value);
 };
 globalFuncs.getRandomBytes = function(num) {
-    return ethUtil.crypto.randomBytes(num);
+    return this.ethUtil.crypto.randomBytes(num);
 };
 
 function getFromLS(key, errorMsg) {
