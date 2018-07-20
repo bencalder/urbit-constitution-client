@@ -174,7 +174,7 @@ Escape `shipAddress` to `sponsorAddress`
 
 
 #### `doAdopt(sponsorAddress, escapeeAddress, callback)`
-`sponsorAddress` accepts `escapeeAddress`
+`sponsorAddress` adopts `escapeeAddress`
 
 
 #### `doReject(sponsorAddress, escapeeAddress, callback)`
