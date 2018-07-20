@@ -314,8 +314,8 @@ var valShip = function(ship) {
   }
 };
 
-var valAddress = function(address) {
-  if (!ethFuncs.validateEtherAddress(address)) {
+var valAddress = function(ethAddress) {
+  if (!ethFuncs.validateEtherAddress(ethAddress)) {
     return true;
   } else {
     return false;
