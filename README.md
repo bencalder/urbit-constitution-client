@@ -4,7 +4,17 @@
 
 ## Install
 
-### `npm install urbit-constitution-client --save`
+#### `npm install urbit-constitution-client --save`
+
+
+
+## Important things to know
+
+There are three categories of Urbit ships: galaxies, stars, and planets. Galaxies spawn stars. Stars spawn planets.
+
+Each Urbit ship has a unique integer address. Galaxy addresses are numbered 0 - 255 (2^8). Star addresses are numbered 256 - 65,535 (2^16). Planet addresses are numbered 65,537 - 4,294,967,295 (2^32).
+
+Each Urbit ship also has a unique human-readable name that's determined from its address.
 
 
 
@@ -12,11 +22,11 @@
 
 
 #### `toAddress(name)`
-Returns an int of the ship's Urbit address
+Converts an Urbit ship name to its address
 
 
 #### `toShipName(address)`
-Converts an Urbit address to a ship name
+Converts an Urbit address to its ship name
 
 
 #### `valGalaxy(galaxy)`
@@ -40,7 +50,7 @@ Adds a tilde to a valid Urbit ship name
 
 
 #### `getSpawnCandidate(address)`
-Returns a random child ship from the Urbit ship `address`
+Returns the address of a random spawn candidate from the Urbit ship `address`. This call does NOT guarantee availability of the returned address.
 
 
 
@@ -108,11 +118,11 @@ Create `galaxy`
 
 
 #### `doDeposit(star, poolAddress, callback)`
-Deposit `star` into the pool
+Deposit `star` into the pool at `poolAddress`
 
 
 #### `doWithdraw(star, poolAddress, callback)`
-Withdraw `star` from the pool
+Withdraw `star` from the pool at `poolAddress`
 
 
 #### `doSpawn(ship, callback)`
