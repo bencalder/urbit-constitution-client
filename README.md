@@ -66,7 +66,7 @@ Read Urbit ship data stored on the blockchain
 
 
 #### `buildOwnedShips(ethAddress, callback)`
-Returns an object loaded with the ships owned by `address`
+Returns an object loaded with the ships owned by `ethAddress`
 
 
 #### `getConstitutionOwner(callback)`
@@ -74,11 +74,11 @@ Returns the Ether address of the owner of the Urbit constitution
 
 
 #### `readShipData(shipAddress, callback)`
-Returns `hasBeenBooted` bool for `shipAddress`
+Returns `hasBeenBooted` bool for ship with `shipAddress`
 
 
 #### `readHasOwner(shipAddress, callback)`
-Returns a bool for whether `shipAddress` has an owner
+Returns a bool for whether ship with `shipAddress` has an owner
 
 
 #### `readIsOwner(shipAddress, ethAddress, callback)`
@@ -94,7 +94,7 @@ Returns the balance of Spark assets in the pool at `poolAddress` held by the giv
 
 
 #### `readParent(shipAddress, callback)`
-Returns the parent ship address of `ship`
+Returns the parent ship address of `shipAddress`
 
 
 #### `readOwnedShips(ethAddress, callback)`
@@ -106,7 +106,7 @@ Returns a bool for whether `shipAddress` is currently requesting an escape to `s
 
 
 #### `readKeys(shipAddress, callback)`
-Returns the keys for `shipAddress`
+Returns the keys for ship at `shipAddress`
 
 
 #### `readIsSpawnProxy(shipAddress, ethAddress, callback)`
@@ -150,7 +150,7 @@ Withdraw `star` from the pool at `poolAddress`
 
 
 #### `doSpawn(shipAddress, callback)`
-Spawn `shipAddress`
+Spawn ship `shipAddress`
 
 
 #### `doSetSpawnProxy(shipAddress, ethAddress, callback)`
