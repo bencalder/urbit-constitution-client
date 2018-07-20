@@ -290,24 +290,24 @@ var validateBytes32 = function(bytes, callback, next) {
 //
 // UI Validators
 //
-var valGalaxy = function(galaxy) {
-  if (galaxy < 0 || galaxy > 255 || typeof galaxy !== 'number') {
+var valGalaxy = function(galaxyAddress) {
+  if (galaxyAddress < 0 || galaxyAddress > 255 || typeof galaxyAddress !== 'number') {
     return true;
   } else {
     return false;
   }
 };
 
-var valStar = function(star) {
-  if (star < 256 || star > 65535 || typeof star !== 'number') {
+var valStar = function(starAddress) {
+  if (starAddress < 256 || starAddress > 65535 || typeof starAddress !== 'number') {
     return true;
   } else {
     return false;
   }
 };
 
-var valShip = function(ship) {
-  if (ship < 0 || ship > 4294967295 || typeof ship !== 'number') {
+var valShip = function(shipAddress) {
+  if (shipAddress < 0 || shipAddress > 4294967295 || typeof shipAddress !== 'number') {
     return true;
   } else {
     return false;
@@ -324,17 +324,17 @@ var valAddress = function(ethAddress) {
 //
 // UI Conveniences
 //
-var formatShipName = function(ship) {
-  if (!ship) {
-    return ship;
+var formatShipName = function(shipName) {
+  if (!shipName) {
+    return shipName;
   } 
-  if (ship.length < 2) {
-    return ship;
+  if (shipName.length < 2) {
+    return shipName;
   }
-  if (ship[0] != '~') {
-    return '~' + ship;
+  if (shipName[0] != '~') {
+    return '~' + shipName;
   } else {
-    return ship;
+    return shipName;
   }
 };
 
@@ -373,27 +373,27 @@ var buildShipData = function(address, terminate, callback) {
   getHasBeenBooted(address, put);
 };
 
-var toAddress = function(name) {
-  return obService.toAddress(name);
+var toAddress = function(shipName) {
+  return obService.toAddress(shipName);
 }
 
-var toShipName = function(address) {
-  if (address > -1 && address < 256) {
-    return obService.toGalaxyName(address);
-  } else if (address > 255 && address < 65536) {
-    return obService.toStarName(address);
+var toShipName = function(shipAddress) {
+  if (shipAddress > -1 && shipAddress < 256) {
+    return obService.toGalaxyName(shipAddress);
+  } else if (shipAddress > 255 && shipAddress < 65536) {
+    return obService.toStarName(shipAddress);
   } else {
-    return obService.toPlanetName(address);
+    return obService.toPlanetName(shipAddress);
   }
 };
 
-var getSpawnCandidate = function(address) {
+var getSpawnCandidate = function(shipAddress) {
   var candidate;
-  if (address > -1 && address < 256) {
-    candidate = ((Math.floor(Math.random() * 255) + 1) * 256 + address);
+  if (shipAddress > -1 && shipAddress < 256) {
+    candidate = ((Math.floor(Math.random() * 255) + 1) * 256 + shipAddress);
     return candidate;
-  } else if (address > 255 && address < 65536) {
-    candidate = ((Math.floor(Math.random() * 65535) + 1) * 65536 + address);
+  } else if (shipAddress > 255 && address < 65536) {
+    candidate = ((Math.floor(Math.random() * 65535) + 1) * 65536 + shipAddress);
     return candidate;
   } else {
     return;
@@ -471,10 +471,10 @@ var getOwner = function(ship, callback) {
   );
 };
 
-var getIsOwner = function(ship, address, callback) {
+var getIsOwner = function(shipAddress, ethAddress, callback) {
   readContractData(contracts.ships,
     "isOwner(uint32,address)",
-    [ship, address],
+    [shipAddress, ethAddress],
     ["bool"],
     callback
   );
@@ -617,20 +617,20 @@ var getHasVotedOnDocumentPoll = function(galaxy, proposal, callback) {
 //
 // READ: fill fields with requested data
 //
-var readShipData = function(ship, callback) {
-  validateShip(ship, callback, function() {
-    getHasBeenBooted(ship, put);
+var readShipData = function(shipAddress, callback) {
+  validateShip(shipAddress, callback, function() {
+    getHasBeenBooted(shipAddress, put);
   });
   function put(data) {
-    callback({ ship: ship, hasBeenBooted: data[0] });
+    callback({ ship: shipAddress, hasBeenBooted: data[0] });
   }
 };
 
-var readOwnedShips = function(addr, callback) {
-  if (!addr) {
+var readOwnedShips = function(ethAddress, callback) {
+  if (!ethAddress) {
     return;
   }
-  getOwnedShips(addr, function(data) {
+  getOwnedShips(ethAddress, function(data) {
     var res = "";
     for (var i in data[0]) {
       res = res + data[0][i] + "\n";
@@ -639,19 +639,19 @@ var readOwnedShips = function(addr, callback) {
   });
 };
 
-var readHasOwner = function(ship, callback) {
-  validateShip(ship, callback, function() {
-    getOwner(ship, put);
+var readHasOwner = function(shipAddress, callback) {
+  validateShip(shipAddress, callback, function() {
+    getOwner(shipAddress, put);
   });
   function put(data) {
     callback(data[0] == '0x0000000000000000000000000000000000000000' ? false : true);
   }
 };
 
-var readIsOwner = function(ship, addr, callback) {
-  validateShip(ship, callback, function() {
-    validateAddress(addr, callbac, function() {
-      getIsOwner(ship, addr, put);
+var readIsOwner = function(shipAddress, ethAddress, callback) {
+  validateShip(shipAddress, callback, function() {
+    validateAddress(ethAddress, callback, function() {
+      getIsOwner(shipAddress, ethAddress, put);
     });
   });
   function put(data) {
@@ -670,19 +670,19 @@ var readPoolAssets = function(poolAddress, callback) {
   };
 };
 
-var readParent = function(ship, callback) {
-  validateChild(ship, callback, function() {
-    getSponsor(ship, put);
+var readParent = function(shipAddress, callback) {
+  validateChild(shipAddress, callback, function() {
+    getSponsor(shipAddress, put);
   });
   function put(data) {
     callback(data[0]);
   }
 };
 
-var readIsRequestingEscapeTo = function(ship, sponsor, callback) {
-  validateChild(ship, callback, function() {
-    validateParent(sponsor, callback, function () {
-      getIsRequestingEscapeTo(ship, sponsor, put);
+var readIsRequestingEscapeTo = function(shipAddress, sponsorAddress, callback) {
+  validateChild(shipAddress, callback, function() {
+    validateParent(sponsorAddress, callback, function () {
+      getIsRequestingEscapeTo(shipAddress, sponsorAddress, put);
     });
   });
   function put(data) {
@@ -690,19 +690,19 @@ var readIsRequestingEscapeTo = function(ship, sponsor, callback) {
   }
 };
 
-var readKeys = function(ship, callback) {
-  validateShip(ship, callback, function() {
-    getKeys(ship, put);
+var readKeys = function(shipAddress, callback) {
+  validateShip(shipAddress, callback, function() {
+    getKeys(shipAddress, put);
   });
   function put(data) {
     callback(data[0]);
   }
 };
 
-var readIsSpawnProxy = function(ship, addr, callback) {
-  validateParent(ship, callback, function() {
-    validateAddress(addr, callback, function () {
-      getIsSpawnProxy(ship, addr, put);
+var readIsSpawnProxy = function(shipAddress, ethAddress, callback) {
+  validateParent(shipAddress, callback, function() {
+    validateAddress(ethAddress, callback, function () {
+      getIsSpawnProxy(shipAddress, ethAddress, put);
     });
   });
   function put(data) {
@@ -722,57 +722,57 @@ var readBalance = function(poolAddress, callback) {
 //
 // CHECK: verify if conditions for a transaction are met
 //
-var checkOwnership = function(ship, callback, next) {
-  getIsOwner(ship, wallet.getAddressString(), function(data) {
+var checkOwnership = function(shipAddress, callback, next) {
+  getIsOwner(shipAddress, wallet.getAddressString(), function(data) {
     if (data[0]) return next();
-    callback({ error: { msg: "Not your ship. " + ship }, data: '' });
+    callback({ error: { msg: "Not your ship. " + shipAddress }, data: '' });
   });
 };
 
-var checkIsTransferProxy = function(ship, addr, callback, next) {
-  getIsTransferProxy(ship, addr, function(data) {
+var checkIsTransferProxy = function(shipAddress, ethAddress, callback, next) {
+  getIsTransferProxy(shipAddress, ethAddress, function(data) {
     if (data[0]) return next();
-    callback({ error: { msg: "Ship is not transferable by " + addr }, data: '' });
+    callback({ error: { msg: "Ship is not transferable by " + ethAddress }, data: '' });
   });
 };
 
-var checkIsUnlocked = function(ship, callback, next) {
-  getIsActive(ship, function(data) {
+var checkIsUnlocked = function(shipAddress, callback, next) {
+  getIsActive(shipAddress, function(data) {
     if (data[0]) return next();
     callback({ error: { msg: "Ship is not active." }, data: '' });
   });
 };
 
-var checkIsLatent = function(ship, callback, next) {
-  getIsActive(ship, function(data) {
+var checkIsLatent = function(shipAddress, callback, next) {
+  getIsActive(shipAddress, function(data) {
     if (!data[0]) return next();
     callback({ error: { msg: "Ship is active." }, data: '' });
   });
 };
 
-var checkCanEscapeTo = function(ship, sponsor, callback, next) {
-  getCanEscapeTo(ship, sponsor, function(data) {
+var checkCanEscapeTo = function(shipAddress, sponsorAddress, callback, next) {
+  getCanEscapeTo(shipAddress, sponsorAddress, function(data) {
     if (data[0]) return next();
-    callback({ error: { msg: "Ship " + ship + " cannot escape to ship " + sponsor + "." }, data: '' });
+    callback({ error: { msg: "Ship " + shipAddress + " cannot escape to ship " + sponsorAddress + "." }, data: '' });
   });
 };
 
-var checkEscape = function(ship, sponsor, callback, next) {
-  getIsRequestingEscapeTo(ship, sponsor, function(data) {
+var checkEscape = function(shipAddress, sponsorAddress, callback, next) {
+  getIsRequestingEscapeTo(shipAddress, sponsorAddress, function(data) {
     if (data[0]) return next();
     callback({ error: { msg: "Escape doesn't match." }, data: '' });
   });
 };
 
-var checkHasBeenBooted = function(sponsor, callback, next) {
-  getHasBeenBooted(sponsor, function(data) {
+var checkHasBeenBooted = function(sponsorAddress, callback, next) {
+  getHasBeenBooted(sponsorAddress, function(data) {
     if (data[0]) return next() 
     callback({ error: { msg: "Ship has not been booted." }, data: '' });
   });
 };
 
-var checkIsNotOwned = function(ship, callback, next) {
-  readHasOwner(ship, function(data) {
+var checkIsNotOwned = function(shipAddress, callback, next) {
+  readHasOwner(shipAddress, function(data) {
     if (!data[0]) return next() 
     callback({ error: { msg: "Ship has an owner." }, data: '' });
   });
@@ -781,22 +781,22 @@ var checkIsNotOwned = function(ship, callback, next) {
 // DO: do transactions that modify the blockchain
 //
 var doCreateGalaxy = function(galaxy, callback) {
-  var addr = wallet.getAddressString();
+  var ethAddress = wallet.getAddressString();
   validateGalaxy(galaxy, callback, function() {
-    validateAddress(addr, callback, function() {
+    validateAddress(ethAddress, callback, function() {
       if (offline) return transact();
       getConstitutionOwner(checkPermission);
     });
   });
   function checkPermission(data) {
-    if (data[0] != addr)
+    if (data[0] != ethAddress)
       callback({ error: { msg: "Insufficient permissions." }, data: '' });
     checkIsNotOwned(galaxy, callback, transact);
   }
   function transact() {
     doTransaction(contracts.constitution,
       "createGalaxy(uint8,address)",
-      [galaxy, addr],
+      [galaxy, ethAddress],
       callback
     );
   }
@@ -811,7 +811,7 @@ var doDeposit = function(star, poolAddress, callback) {
   });
   // star cannot be booted
   function checkHasNotBeenBooted() {
-    getHasBeenBooted(star, ajaxReq, function(data) {
+    getHasBeenBooted(star, function(data) {
       if (data[0])
         callback({ error: { msg: "Ship has been booted." }, data: '' });
       transact();
@@ -840,64 +840,64 @@ var doWithdraw = function(star, poolAddress, callback) {
   }
 };
 
-var doSpawn = function(ship, callback) {
-  var sponsor = ship % 256;
-  if (ship > 65535) sponsor = ship % 65536;
-  var addr = wallet.getAddressString();
-  validateShip(ship, callback, function() {
-    validateAddress(addr, callback, function() {
+var doSpawn = function(shipAddress, callback) {
+  var sponsorAddress = shipAddress % 256;
+  if (shipAddress > 65535) sponsorAddress = shipAddress % 65536;
+  var ethAddress = wallet.getAddressString();
+  validateShip(shipAddress, callback, function() {
+    validateAddress(ethAddress, callback, function() {
       if (offline) return transact();
-      checkIsLatent(ship, callback, function() {
-        checkHasBeenBooted(sponsor, callback, checkParent);
+      checkIsLatent(shipAddress, callback, function() {
+        checkHasBeenBooted(sponsorAddress, callback, checkParent);
       });
     });
   });
   // ship needs to be galaxy, or its parent needs to be living
   function checkParent() {
-    if (ship < 256) return checkRights();
-    checkIsUnlocked(sponsor, callback, checkRights);
+    if (shipAddress < 256) return checkRights();
+    checkIsUnlocked(sponsorAddress, callback, checkRights);
   }
   // user needs to be owner of sponsor or spawn proxy of sponsor
   function checkRights() {
-    getIsSpawnProxy(sponsor, addr, function(data) {
+    getIsSpawnProxy(sponsorAddress, ethAddress, function(data) {
       if (data[0]) return transact();
-      checkOwnership(sponsor, callback, transact);
+      checkOwnership(sponsorAddress, callback, transact);
     });
   }
   function transact() {
     doTransaction(contracts.constitution,
       "spawn(uint32,address)",
-      [ship, addr],
+      [shipAddress, ethAddress],
       callback
     );
   }
 };
 
-var doSetSpawnProxy = function(ship, addr, callback) {
-  validateParent(ship, callback, function() {
-    validateAddress(addr, callback, function() {
+var doSetSpawnProxy = function(shipAddress, ethAddress, callback) {
+  validateParent(shipAddress, callback, function() {
+    validateAddress(ethAddress, callback, function() {
       if (offline) return transact();
-      checkOwnership(ship, callback, function() {
-        checkIsUnlocked(ship, callback, transact);
+      checkOwnership(shipAddress, callback, function() {
+        checkIsUnlocked(shipAddress, callback, transact);
       });
     });
   });
   function transact() {
     doTransaction(contracts.constitution,
       "setSpawnProxy(uint16,address)",
-      [ship, addr],
+      [shipAddress, ethAddress],
       callback
     );
   }
 };
 
-var doConfigureKeys = function(ship, encryptionKey, authenticationKey, discontinuous, callback) {
-  validateShip(ship, callback, function() {
+var doConfigureKeys = function(shipAddress, encryptionKey, authenticationKey, discontinuous, callback) {
+  validateShip(shipAddress, callback, function() {
     validateBytes32(encryptionKey, callback, function() {
       validateBytes32(authenticationKey, callback, function() {
         if (offline) return transact();
-        checkOwnership(ship, callback, function() {
-          checkIsUnlocked(ship, callback, transact);
+        checkOwnership(shipAddress, callback, function() {
+          checkIsUnlocked(shipAddress, callback, transact);
         });
       });
     });
@@ -905,51 +905,51 @@ var doConfigureKeys = function(ship, encryptionKey, authenticationKey, discontin
   function transact() {
     doTransaction(contracts.constitution,
       "configureKeys(uint32,bytes32,bytes32,bool)",
-      [ship, encryptionKey, authenticationKey, discontinuous],
+      [shipAddress, encryptionKey, authenticationKey, discontinuous],
       callback
     );
   }
 };
 
-var doTransferShip = function(ship, addr, reset, callback) {
-  validateShip(ship, callback, function() {
-    validateAddress(addr, callback, function() {
+var doTransferShip = function(shipAddress, ethAddress, reset, callback) {
+  validateShip(shipAddress, callback, function() {
+    validateAddress(ethAddress, callback, function() {
       if (offline) return transact();
-      checkOwnership(ship, callback, transact);
+      checkOwnership(shipAddress, callback, transact);
     });
   });
   function transact() {
     doTransaction(contracts.constitution,
       "transferShip(uint32,address,bool)",
-      [ship, addr, reset],
+      [shipAddress, ethAddress, reset],
       callback
     );
   }
 };
 
-var doSetTransferProxy = function(ship, addr, callback) {
-  validateShip(ship, callback, function() {
-    validateAddress(addr, callback, function() {
+var doSetTransferProxy = function(shipAddress, ethAddress, callback) {
+  validateShip(shipAddress, callback, function() {
+    validateAddress(ethAddress, callback, function() {
       if (offline) return transact();
-      checkOwnership(ship, callback, transact);
+      checkOwnership(shipAddress, callback, transact);
     });
   });
   function transact() {
     doTransaction(contracts.constitution,
       "setTransferProxy(uint32,address)",
-      [ship, addr],
+      [shipAddress, ethAddress],
       callback
     );
   }
 };
 
-var doEscape = function(ship, sponsor, callback) {
-  validateChild(ship, callback, function() {
-    validateParent(sponsor, callback, function() {
+var doEscape = function(shipAddress, sponsorAddress, callback) {
+  validateChild(shipAddress, callback, function() {
+    validateParent(sponsorAddress, callback, function() {
       if (offline) return transact();
-      checkOwnership(ship, callback, function() {
-        checkHasBeenBooted(sponsor, callback, function() {
-          checkCanEscapeTo(ship, sponsor, callback, transact);
+      checkOwnership(shipAddress, callback, function() {
+        checkHasBeenBooted(sponsorAddress, callback, function() {
+          checkCanEscapeTo(shipAddress, sponsorAddress, callback, transact);
         });
       });
     });
@@ -957,68 +957,68 @@ var doEscape = function(ship, sponsor, callback) {
   function transact() {
     doTransaction(contracts.constitution,
       "escape(uint32,uint32)",
-      [ship, sponsor],
+      [shipAddress, sponsorAddress],
       callback
     );
   }
 };
 
-var doAdopt = function(sponsor, escapee, callback) {
-  validateParent(sponsor, callback, function() {
-    validateChild(escapee, callback, function () {
+var doAdopt = function(sponsorAddress, escapeeAddress, callback) {
+  validateParent(sponsorAddress, callback, function() {
+    validateChild(escapeeAddress, callback, function () {
       if (offline) return transact();
-      checkOwnership(escapee, callback, function() {
-        checkEscape(escapee, sponsor, callback, transact);
+      checkOwnership(escapeeAddress, callback, function() {
+        checkEscape(escapeeAddress, sponsorAddress, callback, transact);
       });
     });
   });
   function transact() {
     doTransaction(contracts.constitution,
       "adopt(uint32,uint32)",
-      [sponsor, escapee],
+      [sponsorAddress, escapeeAddress],
       callback
     );
   }
 };
 
-var doReject = function(sponsor, escapee, callback) {
-  validateParent(sponsor, callback, function() {
-    validateChild(escapee, callback, function () {
+var doReject = function(sponsorAddress, escapeeAddress, callback) {
+  validateParent(sponsorAddress, callback, function() {
+    validateChild(escapeeAddress, callback, function () {
       if (offline) return transact();
-      checkOwnership(escapee, callback, function() {
-        checkEscape(escapee, sponsor, callback, transact);
+      checkOwnership(escapeeAddress, callback, function() {
+        checkEscape(escapeeAddress, sponsorAddress, callback, transact);
       });
     });
   });
   function transact() {
     doTransaction(contracts.constitution,
       "reject(uint32,uint32)",
-      [sponsor, escapee],
+      [sponsorAddress, escapeeAddress],
       callback
     );
   }
 };
 
-var doApprove = function(address, ship, callback) {
-  validateAddress(address, callback, function () {
-    validateShip(ship, callback, function () {
+var doApprove = function(ethAddress, shipAddress, callback) {
+  validateAddress(ethAddress, callback, function () {
+    validateShip(shipAddress, callback, function () {
       if (offline) return transact();
-      checkOwnership(ship, callback, transact);
+      checkOwnership(shipAddress, callback, transact);
     });
   });
   function transact() {
     doTransaction(contracts.constitution,
       "approve(address,uint256)",
-      [address, ship],
+      [ethAddress, shipAddress],
       callback
     );
   }
 };
 
-var doSafeTransferFrom = function(fromAddr, toAddr, ship, callback) {
-  validateAddress(fromAddr, callback, function () {
-    validateAddress(toAddr, callback, function () {
-      validateShip(ship, callback, function () {
+var doSafeTransferFrom = function(fromEthAddress, toEthAddress, shipAddress, callback) {
+  validateAddress(fromEthAddress, callback, function () {
+    validateAddress(toEthAddress, callback, function () {
+      validateShip(shipAddress, callback, function () {
         if (offline) return transact();
         // TODO: add check to validate that the caller has been approved to initiate transfer
         transact();
@@ -1028,7 +1028,7 @@ var doSafeTransferFrom = function(fromAddr, toAddr, ship, callback) {
   function transact() {
     doTransaction(contracts.constitution,
       "safeTransferFrom(address,address,uint256)",
-      [fromAddr, toAddr, ship],
+      [fromEthAddress, toEthAddress, shipAddress],
       callback
     );
   }
@@ -1089,6 +1089,7 @@ var doCastDocumentVote = function(galaxy, prop, vote, callback) {
 module.exports = {
   offline: offline,
   poolAddress: poolAddress,
+  contracts: contracts,
   ajaxReq: ajaxReq,
   wallet: wallet,
   validator: validator,
