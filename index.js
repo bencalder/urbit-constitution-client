@@ -2,11 +2,11 @@
 
 // urbit constitution client module
 
-var obService = require('urbit-ob');
+var Web3 = require('web3');
 var ethUtil = require('ethereumjs-util');
 var bip39 = require('bip39');
 var hdkey = require('hdkey');
-var Web3 = require('web3');
+var obService = require('urbit-ob');
 
 const contractDetails = require('./scripts/contractDetails');
 
@@ -37,21 +37,15 @@ var privateKeyMaster;
 var buildWalletsFromMnemonic = function(mnemonic, cb) {
   var masterKeys = hdkey.fromMasterSeed(bip39.mnemonicToSeed(mnemonic));
   web3.eth.accounts.privateKeyToAccount(masterKeys.privateKey.toString('hex'));
-  var addr;
   var privKey;
   var path;
   web3.eth.getAccounts(function(err, res) {
     if (!err) { 
       web3.eth.defaultAccount = res[0];
-      for (var i = 0; i < 10; i++) {
-        path = "m/44'/60'/0'/0/" + i;
-        privKey = masterKeys.derive(path).privateKey;
-        addr = ethUtil.toChecksumAddress(ethUtil.privateToAddress(privKey).toString('hex'));
-        if (i === 0) { 
-          privateKeyMaster = privKey.toString('hex'); 
-          cb(web3.eth.defaultAccount);
-        }
-      }
+      path = "m/44'/60'/0'/0/" + 0;
+      privKey = masterKeys.derive(path).privateKey;
+      privateKeyMaster = privKey.toString('hex'); 
+      cb(web3.eth.defaultAccount);
     }
   });
 };
@@ -77,20 +71,16 @@ var signTransaction = function(encodedABI, contractAddress, cb) {
 
 var sendTransaction = function(signedTx, cb) {
   var tran = web3.eth.sendSignedTransaction(signedTx);
-
+  tran.on('transactionHash', hash => {
+    cb(hash);
+  });
+  tran.on('error', console.error);
   // tran.on('confirmation', (confirmationNumber, receipt) => {
   //   console.log('confirmation: ' + confirmationNumber);
   // });
 
-  tran.on('transactionHash', hash => {
-    cb(hash);
-  });
-
   // tran.on('receipt', receipt => {
-  //   console.log('receipt');
   //   console.log(receipt);
-
-  tran.on('error', console.error);
 };
 
 var generateTxOffline = function(cb) {
@@ -390,15 +380,15 @@ var readShipData = function(shipAddress, cb) {
   validateShip(shipAddress, cb, function() {
     getHasBeenBooted(shipAddress, put);
   });
-  function put(data) {
-    cb({ ship: shipAddress, hasBeenBooted: data[0] });
+  function put(err, res) {
+    if (!err) {
+      cb({ ship: shipAddress, hasBeenBooted: res });
+    } else { cb({ error: { msg: "Error retrieving hasBeenBooted" }, data: '' }); }
   }
 };
 
 var readOwnedShips = function(ethAddress, cb) {
-  if (!ethAddress) {
-    return;
-  }
+  if (!ethAddress) { return; }
   getOwnedShips(ethAddress, function(err, res) {
     if (!err) {
       var res = "";
@@ -406,7 +396,7 @@ var readOwnedShips = function(ethAddress, cb) {
         res = res + data[0][i] + "\n";
       }
       cb(generateShipList(res));
-    }
+    } else { cb({ error: { msg: "Error retrieving owned ships" }, data: '' }); }
   });
 };
 
@@ -427,8 +417,10 @@ var readIsOwner = function(shipAddress, ethAddress, cb) {
       getIsOwner(shipAddress, ethAddress, put);
     });
   });
-  function put(data) {
-    cb(data);
+  function put(err, res) {
+    if (!err) {
+      cb(data);
+    } else { cb({ error: { msg: "Error retrieving isOwner" }, data: '' }); }
   }
 };
 
@@ -441,18 +433,18 @@ var readPoolAssets = function(cb) {
         t.push(formatShipName(toShipName(res[i])));
       }
       cb(t);
-    }
+    } else { cb({ error: { msg: "Error retrieving pool assets" }, data: '' }); }
   }
 };
 
-var readParent = function(shipAddress, cb) {
+var readSponsor = function(shipAddress, cb) {
   validateChild(shipAddress, cb, function() {
     getSponsor(shipAddress, put);
   });
   function put(err, res) {
     if (!err) {
       cb(res);
-    }
+    } else { cb({ error: { msg: "Error retrieving sponsor" }, data: '' }); }
   }
 };
 
@@ -462,8 +454,10 @@ var readIsRequestingEscapeTo = function(shipAddress, sponsorAddress, cb) {
       getIsRequestingEscapeTo(shipAddress, sponsorAddress, put);
     });
   });
-  function put(data) {
-    cb(data[0]);
+  function put(err, res) {
+    if (!err) {
+      cb(res);
+    } else { cb({ error: { msg: "Error retrieving isRequestingEscapeTo" }, data: '' }); }
   }
 };
 
@@ -471,8 +465,10 @@ var readKeys = function(shipAddress, cb) {
   validateShip(shipAddress, cb, function() {
     getKeys(shipAddress, put);
   });
-  function put(data) {
-    cb(data[0]);
+  function put(err, res) {
+    if (!err) {
+      cb(res);
+    } else { cb({ error: { msg: "Error retrieving keys" }, data: '' }); }
   }
 };
 
@@ -482,14 +478,18 @@ var readIsSpawnProxy = function(shipAddress, ethAddress, cb) {
       getIsSpawnProxy(shipAddress, ethAddress, put);
     });
   });
-  function put(data) {
-    cb(data[0]);
+  function put(err, res) {
+    if (!err) {
+      cb(res);
+    } else { cb({ error: { msg: "Error retrieving spawn proxy" }, data: '' }); }
   }
 };
 
 var readBalance = function(ethAddress, cb) {
   getSparkBalance(ethAddress, function(err, res) {
-    if (!err) { cb(res / oneSpark); }
+    if (!err) {
+      cb(res / oneSpark);
+    } else { cb({ error: { msg: "Error retrieving spark balance" }, data: '' }); }
   });
 };
 //
@@ -532,16 +532,20 @@ var checkIsLatent = function(shipAddress, cb, next) {
 };
 
 var checkCanEscapeTo = function(shipAddress, sponsorAddress, cb, next) {
-  getCanEscapeTo(shipAddress, sponsorAddress, function(data) {
-    if (data[0]) return next();
-    cb({ error: { msg: "Ship " + shipAddress + " cannot escape to ship " + sponsorAddress + "." }, data: '' });
+  getCanEscapeTo(shipAddress, sponsorAddress, function(err, res) {
+    if (!err) {
+      if (res) return next();
+      cb({ error: { msg: "Ship " + shipAddress + " cannot escape to ship " + sponsorAddress + "." }, data: '' });
+    } else { cb({ error: { msg: "Error retrieving canEscapeTo" }, data: '' }); }
   });
 };
 
 var checkEscape = function(shipAddress, sponsorAddress, cb, next) {
-  getIsRequestingEscapeTo(shipAddress, sponsorAddress, function(data) {
-    if (data[0]) return next();
-    cb({ error: { msg: "Escape doesn't match." }, data: '' });
+  getIsRequestingEscapeTo(shipAddress, sponsorAddress, function(err, res) {
+    if (!err) {
+      if (res) return next();
+      cb({ error: { msg: "Escape doesn't match." }, data: '' });
+    } else { cb({ error: { msg: "Error retrieving isRequestingEscapeTo" }, data: '' }); }
   });
 };
 
@@ -674,11 +678,9 @@ var doConfigureKeys = function(shipAddress, encryptionKey, authenticationKey, di
     });
   });
   function transact() {
-    doTransaction(contracts.constitution,
-      "configureKeys(uint32,bytes32,bytes32,bool)",
-      [shipAddress, encryptionKey, authenticationKey, discontinuous],
-      cb
-    );
+    signTransaction(contracts['constitution'].methods.configureKeys(shipAddress, encryptionKey, authenticationKey, discontinuous).encodeABI(),
+                    contractDetails['constitution']['address'],
+                    cb);
   }
 };
 
@@ -690,11 +692,9 @@ var doTransferShip = function(shipAddress, ethAddress, reset, cb) {
     });
   });
   function transact() {
-    doTransaction(contracts.constitution,
-      "transferShip(uint32,address,bool)",
-      [shipAddress, ethAddress, reset],
-      cb
-    );
+    signTransaction(contracts['constitution'].methods.transferShip(shipAddress, ethAddress, reset).encodeABI(),
+                    contractDetails['constitution']['address'],
+                    cb);
   }
 };
 
@@ -724,11 +724,9 @@ var doEscape = function(shipAddress, sponsorAddress, cb) {
     });
   });
   function transact() {
-    doTransaction(contracts.constitution,
-      "escape(uint32,uint32)",
-      [shipAddress, sponsorAddress],
-      cb
-    );
+    signTransaction(contracts['constitution'].methods.escape(shipAddress, sponsorAddress).encodeABI(),
+                    contractDetails['constitution']['address'],
+                    cb);
   }
 };
 
@@ -742,11 +740,9 @@ var doAdopt = function(sponsorAddress, escapeeAddress, cb) {
     });
   });
   function transact() {
-    doTransaction(contracts.constitution,
-      "adopt(uint32,uint32)",
-      [sponsorAddress, escapeeAddress],
-      cb
-    );
+    signTransaction(contracts['constitution'].methods.adopt(sponsorAddress, escapeeAddress).encodeABI(),
+                    contractDetails['constitution']['address'],
+                    cb);
   }
 };
 
@@ -760,11 +756,9 @@ var doReject = function(sponsorAddress, escapeeAddress, cb) {
     });
   });
   function transact() {
-    doTransaction(contracts.constitution,
-      "reject(uint32,uint32)",
-      [sponsorAddress, escapeeAddress],
-      cb
-    );
+    signTransaction(contracts['constitution'].methods.reject(sponsorAddress, escapeeAddress).encodeABI(),
+                    contractDetails['constitution']['address'],
+                    cb);
   }
 };
 
@@ -776,11 +770,9 @@ var doApprove = function(ethAddress, shipAddress, cb) {
     });
   });
   function transact() {
-    doTransaction(contracts.constitution,
-      "approve(address,uint256)",
-      [ethAddress, shipAddress],
-      cb
-    );
+    signTransaction(contracts['constitution'].methods.approve(ethAddress, shipAddress).encodeABI(),
+                    contractDetails['constitution']['address'],
+                    cb);
   }
 };
 
@@ -795,11 +787,9 @@ var doSafeTransferFrom = function(fromEthAddress, toEthAddress, shipAddress, cb)
     });
   });
   function transact() {
-    doTransaction(contracts.constitution,
-      "safeTransferFrom(address,address,uint256)",
-      [fromEthAddress, toEthAddress, shipAddress],
-      cb
-    );
+    signTransaction(contracts['constitution'].methods.safeTransferFrom(fromEthAddress, toEthAddress, shipAddress).encodeABI(),
+                    contractDetails['constitution']['address'],
+                    cb);
   }
 };
 
@@ -819,11 +809,9 @@ var doCastConstitutionVote = function(galaxy, prop, vote, cb) {
     cb({ error: { msg: "Vote already registered." }, data: '' });
   }
   function transact() {
-    doTransaction(contracts.constitution,
-      "castConstitutionVote(uint8,address,bool)",
-      [galaxy, prop, vote],
-      cb
-    );
+    signTransaction(contracts['constitution'].methods.castConstitutionVote(galaxy, prop, vote).encodeABI(),
+                    contractDetails['constitution']['address'],
+                    cb);
   }
 };
 
@@ -847,11 +835,9 @@ var doCastDocumentVote = function(galaxy, prop, vote, cb) {
     cb({ error: { msg: "Vote already registered." }, data: '' });
   }
   function transact() {
-    doTransaction(contracts.constitution,
-      "castDocumentVote(uint8,bytes32,bool)",
-      [galaxy, prop, vote],
-      cb
-    );
+    signTransaction(contracts['constitution'].methods.castDocumentVote(galaxy, prop, vote).encodeABI(),
+                    contractDetails['constitution']['address'],
+                    cb);
   }
 };
 
@@ -874,7 +860,7 @@ module.exports = {
   readIsOwner: readIsOwner,
   readPoolAssets: readPoolAssets,
   readBalance: readBalance,
-  readParent: readParent,
+  readSponsor: readSponsor,
   readOwnedShips: readOwnedShips,
   readIsRequestingEscapeTo: readIsRequestingEscapeTo,
   readKeys: readKeys,
