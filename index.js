@@ -37,13 +37,11 @@ var privateKeyMaster;
 var buildWalletsFromMnemonic = function(mnemonic, cb) {
   var masterKeys = hdkey.fromMasterSeed(bip39.mnemonicToSeed(mnemonic));
   web3.eth.accounts.privateKeyToAccount(masterKeys.privateKey.toString('hex'));
-  var privKey;
-  var path;
   web3.eth.getAccounts(function(err, res) {
     if (!err) { 
       web3.eth.defaultAccount = res[0];
-      path = "m/44'/60'/0'/0/" + 0;
-      privKey = masterKeys.derive(path).privateKey;
+      var path = "m/44'/60'/0'/0/" + 0;
+      var privKey = masterKeys.derive(path).privateKey;
       privateKeyMaster = privKey.toString('hex'); 
       cb(web3.eth.defaultAccount);
     }
@@ -804,9 +802,11 @@ var doCastConstitutionVote = function(galaxy, prop, vote, cb) {
       });
     });
   });
-  function checkVote(data) {
-    if (!data[0]) return transact();
-    cb({ error: { msg: "Vote already registered." }, data: '' });
+  function checkVote(err, res) {
+    if (!err) {
+      if (!res) return transact();
+      else { cb({ error: { msg: "Vote already registered." }, data: '' }); }
+    } else { cb({ error: { msg: "Error retrieving vote status." }, data: '' }); }
   }
   function transact() {
     signTransaction(contracts['constitution'].methods.castConstitutionVote(galaxy, prop, vote).encodeABI(),
@@ -826,13 +826,17 @@ var doCastDocumentVote = function(galaxy, prop, vote, cb) {
       });
     });
   });
-  function checkMajority(data) {
-    if (!data[0]) return getHasVotedOnDocumentPoll(galaxy, prop, checkVote);
-    return cb({ error: { msg: "Document already has majority." }, data: '' });
+  function checkMajority(err, res) {
+    if (!err) {
+      if (!res) return getHasVotedOnDocumentPoll(galaxy, prop, checkVote);
+      else { cb({ error: { msg: "Document already has majority." }, data: '' }); }
+    } else { cb({ error: { msg: "Error retrieving document majority status." }, data: '' }); }
   }
-  function checkVote(data) {
-    if (!data[0]) return transact();
-    cb({ error: { msg: "Vote already registered." }, data: '' });
+  function checkVote(err, res) {
+    if (!err) {
+      if (!res) return transact();
+      else { cb({ error: { msg: "Vote already registered." }, data: '' }); ]
+    } else { cb({ error: { msg: "Error retrieving vote status." }, data: '' }); ]
   }
   function transact() {
     signTransaction(contracts['constitution'].methods.castDocumentVote(galaxy, prop, vote).encodeABI(),
