@@ -835,8 +835,8 @@ var doCastDocumentVote = function(galaxy, prop, vote, cb) {
   function checkVote(err, res) {
     if (!err) {
       if (!res) return transact();
-      else { cb({ error: { msg: "Vote already registered." }, data: '' }); ]
-    } else { cb({ error: { msg: "Error retrieving vote status." }, data: '' }); ]
+      else { cb({ error: { msg: "Vote already registered." }, data: '' }); }
+    } else { cb({ error: { msg: "Error retrieving vote status." }, data: '' }); }
   }
   function transact() {
     signTransaction(contracts['constitution'].methods.castDocumentVote(galaxy, prop, vote).encodeABI(),
